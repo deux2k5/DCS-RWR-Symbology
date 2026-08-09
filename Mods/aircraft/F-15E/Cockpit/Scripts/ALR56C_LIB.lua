@@ -27,7 +27,6 @@ rwr_codes["F/A-18A"				] = { code = "18", coal = 1, desc = "F/A-18A" }
 rwr_codes["F/A-18C"				] = { code = "18", coal = 1, desc = "F/A-18C" }
 rwr_codes["FA-18C_hornet"		] = { code = "18", coal = 1, desc = "F/A-18C" }
 rwr_codes["AV8BNA"				] = { code = "18", coal = 1, desc = "AV-8B+" }
-rwr_codes["AH-64D_BLK_II"		] = { code = "64", coal = 1, desc = "AH-64D" }
 rwr_codes["Tornado GR4"			] = { code = "TO", coal = 1, desc = "TORNADO" }
 rwr_codes["Tornado IDS"			] = { code = "TO", coal = 1, desc = "TORNADO" }
 rwr_codes["M-2000C"				] = { code = "M2", coal = 1, desc = "M2000-C" }
@@ -35,8 +34,6 @@ rwr_codes["Mirage 2000-5"		] = { code = "M5", coal = 1, desc = "M2000-5" }
 rwr_codes["AJS37"				] = { code = "37", coal = 1, desc = "AJS-37" }
 rwr_codes["B-1B"				] = { code = "51", coal = 1, desc = "B-1B" }
 rwr_codes["B-52H"				] = { code = "52", coal = 1, desc = "B-52" }
-rwr_codes["S-3B"				] = { code = "S3", coal = 1, desc = "S-3" }
-rwr_codes["S-3B Tanker"			] = { code = "S3", coal = 1, desc = "S-3" }
 rwr_codes["E-2C"				] = { code = "E2", coal = 1, desc = "AWACS" }
 rwr_codes["E-3A"				] = { code = "E3", coal = 1, desc = "AWACS" }
 rwr_codes["Mirage-F1B"			] = { code = "M1", coal = 1, desc = "Mirage-F1" }
@@ -69,8 +66,8 @@ rwr_codes["Hawk cwar"			] = { code = "HK", coal = 1, desc="HAWK" }
 rwr_codes["Patriot str"			] = { code = "PT", coal = 1, desc="PATRIOT" }
 rwr_codes["Patriot ln"			] = { code = "PT", coal = 1, desc="PATRIOT" }
 rwr_codes["Patriot ECS"			] = { code = "PT", coal = 1, desc="PATRIOT" }
-rwr_codes["Gepard"				] = { code = "GP", coal = 1, desc="GUEPARD" }
-rwr_codes["Vulcan"				] = { code = "VL", coal = 1, desc="VULCAN" }
+rwr_codes["Gepard"				] = { code = "AA", coal = 1, desc="GEPARD" }
+rwr_codes["Vulcan"				] = { code = "AA", coal = 1, desc="VULCAN" }
 rwr_codes["Roland Radar"		] = { code = "RD", coal = 1, desc="ROLAND" }
 rwr_codes["Roland ADS"			] = { code = "RD", coal = 1, desc="ROLAND" }
 rwr_codes["NASAMS_Radar_MPQ64F1"] = { code = "NS", coal = 1, desc="NASAMS" }
@@ -111,7 +108,6 @@ rwr_codes["Su-34"				] = { code = "34", coal = 2, desc = "SU-34" }
 rwr_codes["Tu-22M3"				] = { code = "62", coal = 2, desc = "TU-22" }
 rwr_codes["Tu-95MS"				] = { code = "65", coal = 2, desc = "TU-95" }
 rwr_codes["Tu-142"				] = { code = "65", coal = 2, desc = "TU-142" }
-rwr_codes["Tu-160"				] = { code = "65", coal = 2, desc = "TU-160" }
 rwr_codes["KJ-2000"				] = { code = "EW", coal = 2, desc = "AWACS" }
 rwr_codes["A-50"				] = { code = "EW", coal = 2, desc = "AWACS" }
 
@@ -163,7 +159,7 @@ rwr_codes["Type_093"	       	] = { code = "HS", coal = 2, desc="PLA EW" } -- Chi
 -- Base game, not in mod--
 rwr_codes["Forrestal"			] = { code = "FR", coal = 2, desc="AN/SPS-48C" }
 rwr_codes["BDK-775"				] = { code = "BT", coal = 2, desc="Bass Tilt" }
-rwr_codes["HEMTT_C-RAM_Phalanx"	] = { code = "CR", coal = 2, desc="C-RAM" }
+rwr_codes["HEMTT_C-RAM_Phalanx"	] = { code = "AA", coal = 2, desc="C-RAM" }
 rwr_codes["RD_75"				] = { code = "2", coal = 2, desc="RD-75 Amazonka" }
 rwr_codes["hms_invincible"		] = { code = "IV", coal = 2, desc="Type 1022" }
 rwr_codes["CHAP_TorM2"			] = { code = "15", coal = 2, desc="Scrum Half" }
@@ -182,25 +178,29 @@ rwr_codes["EWR 55G6U NEBO-U"	] = { code = "EW", coal = 2, desc="Tall Rack" }
 rwr_codes["EWR Generic radar tower"	       	] = { code = "EW", coal = 2, desc="EWR" }
 
 rwr_codes["CLP_E7A"	       	] = { code = "E7", coal = 1, desc="E-7 Wedgetail" }
-rwr_codes["CLP_P8"	       	] = { code = "P8", coal = 1, desc="P-8 Poseidon" }
-rwr_codes["EC130"	       	] = { code = "EC", coal = 1, desc="EC-130" }
-rwr_codes["RC135RJ"	       	] = { code = "RC", coal = 1, desc="RC-135 Rivet Joint" }
-rwr_codes["RC135CB"	       	] = { code = "RC", coal = 1, desc="RC-135 Cobra Ball" }
-rwr_codes["CLP_TU214R"	    ] = { code = "TU", coal = 1, desc="Tu-214R" }
+rwr_codes["RC135RJ"	       	] = { code = "EW", coal = 1, desc="RC-135 Rivet Joint" }
+rwr_codes["RC135CB"	       	] = { code = "EW", coal = 1, desc="RC-135 Cobra Ball" }
+rwr_codes["C2A_Greyhound"	] = { code = "E3", coal = 1, desc="C-2A Greyhound" }
+rwr_codes["Eurofighter"		] = { code = "EF", coal = 1, desc="EF-2000" }
+rwr_codes["J-10A"			] = { code = "KL", coal = 2, desc="J-10A" }
+rwr_codes["J-15"			] = { code = "NR", coal = 2, desc="J-15" }
+rwr_codes["J-16"			] = { code = "NR", coal = 2, desc="J-16" }
+rwr_codes["J-16 07 Batch"	] = { code = "NR", coal = 2, desc="J-16" }
 
 -- China Assets by Currenthill --
 rwr_codes["CH_HQ22_STR"	       	] = { code = "22", coal = 2, desc="HQ-22" }
 rwr_codes["CH_HQ22_SR"	       	] = { code = "22", coal = 2, desc="HQ-22 SR" }
 rwr_codes["Type052D"	       	] = { code = "H9", coal = 2, desc="Dragon Eye" }
 rwr_codes["CH_Type054B"	       	] = { code = "H6", coal = 2, desc="HHQ-16C" }
-rwr_codes["CH_Type022"	       	] = { code = "2A", coal = 2, desc="MR-36A" }
+rwr_codes["CH_Type022"	       	] = { code = "2A", coal = 2, desc="Type 022 / MR-36A" }
 rwr_codes["Type055"	       		] = { code = "6B", coal = 2, desc="Type 346B" }
 rwr_codes["CH_Type056A"	       	] = { code = "H6", coal = 2, desc="Type 349A" }
-rwr_codes["PGL_625"	  	     	] = { code = "2A", coal = 2, desc="MR-36A" }
+rwr_codes["PGL_625"	  	     	] = { code = "AA", coal = 2, desc="PGL-625" }
 rwr_codes["HQ17A"		       	] = { code = "Q7", coal = 2, desc="HQ-17" }
-rwr_codes["CH_PGZ09"	       	] = { code = "09", coal = 2, desc="MR-36A" }
-rwr_codes["CH_LD3000"	       	] = { code = "A", coal = 2, desc="Goalkeeper CIWS" }
-rwr_codes["CH_LD3000_stationary"] = { code = "A", coal = 2, desc="Goalkeeper CIWS" }
+rwr_codes["CH_PGZ09"	       	] = { code = "AA", coal = 2, desc="PGZ-09" }
+rwr_codes["CH_PGZ95"	       	] = { code = "AA", coal = 2, desc="PGZ-95" }
+rwr_codes["CH_LD3000"	       	] = { code = "AA", coal = 2, desc="LD-3000" }
+rwr_codes["CH_LD3000_stationary"] = { code = "AA", coal = 2, desc="LD-3000" }
 
 -- Russia Assets by Currenthill --
 rwr_codes["PantsirS1"	       	] = { code = "22", coal = 2, desc="Hot Shot" }
@@ -233,7 +233,7 @@ rwr_codes["MIM104_ANMPQ65_HEMTT"	  	] = { code = "P2", coal = 1, desc="AN/MPQ-65
 rwr_codes["MIM104_LTAMDS"		       	] = { code = "P3", coal = 1, desc="LTAMDS GhostEye" }
 rwr_codes["MIM104_LTAMDS_HEMTT"	       	] = { code = "P3", coal = 1, desc="LTAMDS GhostEye" }
 rwr_codes["CH_NASAMS3_SR"	    		] = { code = "NS", coal = 1, desc="MPQ-64F1" }
-rwr_codes["CH_Centurion_C_RAM"	    	] = { code = "A", coal = 1, desc="AN/VPS-2" } --AN/VPS-2 Search/Track
+rwr_codes["CH_Centurion_C_RAM"	    	] = { code = "AA", coal = 1, desc="C-RAM" }
 rwr_codes["CH_THAAD_ANTPY2"	    		] = { code = "TH", coal = 1, desc="AN/TPY-2" } -- AN/TPY-2 TMD-GBR
 
 -- Admirals Ships Mods --

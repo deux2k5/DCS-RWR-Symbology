@@ -35,8 +35,7 @@ symbols =
     {AV_8B_,        "AV"},
     {EA_6B_,        "E6"},
     {F_111_,        "11"},
-    {Tu_160_,       "BJ"},
-    {B_1_,          "B1"},
+    {B_1_,          "51"},
     {Tu_22M3_,      "TU"},		--NIGHTSTORM 22
     {MiG_25P_,      "25"},
     {MiG_31_,       "31"},
@@ -83,9 +82,9 @@ symbols =
     {Tor_9A331,             "15"},
     {Roland_ADS,            "RO"},
     {Tunguska_2S6,          "19"},
-    {ZSU_23_4_Shilka,       "A"},
-    {Gepard,                "A"},
-    {Vulcan_M163,           "A"},
+    {ZSU_23_4_Shilka,       "AA"},
+    {Gepard,                "AA"},
+    {Vulcan_M163,           "AA"},
     {Kuznecow_,             "SW"},
     {VINSON_,               "SS"},		-- SUPCAR-159: Carriers unknown on RWR - made the same as other carriers -- AN/SPS-48E NTU
     {MOSCOW_,               "T2"},
@@ -213,8 +212,7 @@ symbols_strings ={
 	['S-300PS 40B6MD sr_19J6'] = 'TS', -- Tin Shield
 	
 	['F-5E-3_FC']			= 'F5',
-    ['AH-64D_BLK_II']       = '64',	
-    ['HEMTT_C-RAM_Phalanx'] = 'CR',
+    ['HEMTT_C-RAM_Phalanx'] = 'AA',
     ['RD_75'] = '2', -- RD-75 Amazonka
     ['Forrestal'] = 'FR', -- AN/SPS-48C 
     ['hms_invincible'] = 'IV',
@@ -283,7 +281,6 @@ symbols_strings ={
 	['Hercules']			= '13',					
 	['E-3A']				= 'E3',						
 	['A400M_Atlas']			= 'AM',			
-	['B2_Spirit']			= 'B2',				
 	['C2A_Greyhound']		= 'C2',					
 	['C5_Galaxy']			= 'C5',				
 	['KC_10_Extender']		= 'KC',				
@@ -295,9 +292,9 @@ symbols_strings ={
 	['J-7D']				= '21',	
 	['J-11B']				= '29',	
 	['J-11D']				= '29',		
-	['J-15']				= '29',	
-	['J-16']				= '30',		
-	['J-16 07 Batch']		= '30',		
+	['J-15']				= 'NR',
+	['J-16']				= 'NR',
+	['J-16 07 Batch']		= 'NR',
 	['J-20']				= '20',			
 	['J-20B']				= '20',			
 	['MiG-23UB']			= '23',	
@@ -321,8 +318,6 @@ symbols_strings ={
 	['F-117']				= 'NH',	
 	['CLP_E7A']				= 'E7',	
 	['CLP_P8']				= 'P8',
-	['CLP_TU214R']			= 'TU',								   
-	['EC130']				= 'EC',			
 	['RC135RJ']				= 'RC',				
 	['RC135CB']				= 'RC',					
 	['us_jtac_infantry']	= 'S',		
@@ -528,7 +523,7 @@ symbols_strings ={
 	['MIM104_ANMPQ65A']				= 'P2',		-- AN/MPQ-65
 	['MIM104_LTAMDS']				= 'P3',		-- GhostEye
 	['CH_NASAMS3_SR']				= 'NS',		
-	['CH_Centurion_C_RAM']			= 'A',		-- AN/VPS-2 Search/Track
+	['CH_Centurion_C_RAM']			= 'AA',		-- C-RAM
 	['CH_THAAD_ANTPY2']				= 'TH',		-- AN/TPY-2 TMD-GBR
 		
 --MILITARY ASSETS (UK)
@@ -543,7 +538,7 @@ symbols_strings ={
 	
 --MILITARY ASSETS (Sweden)
 	['HSwMS_Visby']					= 'FS',		
-	['LvKv9040']					= '94',		
+	['LvKv9040']					= 'AA',
 	['LvS-103_PM103']				= 'P',		
 	['LvS-103_PM103_HX']			= 'P',		
 	['RBS-90']						= '90',		
@@ -560,22 +555,22 @@ symbols_strings ={
 	['CH_Type054B']					= 'H6',	-- Type 054A Batch 5, AESA, HHQ-16C -- China Type XXX MFR
 	['Type055']						= 'HN',	-- China H/LJG-346B [Type 346B] Dragon Eye
 	['CH_Type056A']					= '9A',	-- China H/LJQ-361A [Type 361]
-	['PGL_625']						= '25',	-- unk AESA	
+	['PGL_625']						= 'AA',	-- SPAAGM
 	['HQ17A']						= 'Q7',	-- SA-15 Copy	
-	['CH_PGZ09']					= '09',	-- CLC-2
+	['CH_PGZ09']					= 'AA',	-- PGZ-09 SPAAG
 	['CH_Type022']					= '2A',	-- Type 362A - (MR-36A, Used on Type 022)
 	['CH_HQ22_STR']					= 'Q2',	-- China H-200 Improved
 	['CH_HQ22_SR']					= '2V',	-- China YLC-2V Mod [Type 305B]
-	['CH_LD3000']					= 'A', -- Type 347G [TR-47C, Radar Tracker] - (Goalkeeper, Type 730 CIWS)
-	['CH_LD3000_stationary']		= 'A', -- Type 347G [TR-47C, Radar Tracker] - (Goalkeeper, Type 730 CIWS)
-	['CH_PGZ95']					= '95',	
+	['CH_LD3000']					= 'AA', -- LD-3000 land-based CIWS
+	['CH_LD3000_stationary']		= 'AA', -- LD-3000 land-based CIWS
+	['CH_PGZ95']					= 'AA',
 
 --Military Assets Pack Germany by Currenthill	
-	['CH_BoxerSkyranger']			= 'SX',		
+	['CH_BoxerSkyranger']			= 'AA',
 	['CH_FlaRakRad']				= 'FR',		
 	['CH_TRML4D']					= '4D',		
 	['CH_MIM104_ANMPQ53_KAT1']		= 'P',		
-	['CH_SkynexHX']					= 'SX',	
+	['CH_SkynexHX']					= 'AA',
 	['CH_Skyshield_FCU']			= 'SX',	
 	['CH_Wiesel2Ozelot']			= 'OZ',	
 	['CH_F124']						= 'FF',			
