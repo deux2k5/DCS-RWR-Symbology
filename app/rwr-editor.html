@@ -538,7 +538,6 @@ function paintLibs() {
 
 async function openLibrary(id) {
   S.lib = id;
-  try { localStorage.setItem("rwr-lib", id); } catch (e) {}
   paintLibs();
   if (S.dir) {                                             // a real folder is open, use its copy
     try { return await openFromDir(lib().file); } catch (e) {}
@@ -608,20 +607,17 @@ async function recall() {
 }
 
 (async function boot() {
-  let saved = null;
-  try { saved = localStorage.getItem("rwr-lib"); } catch (e) {}
-  // open the published copy of the library you used last, F-15E the first time
-  await openLibrary(LIBS.some(l => l.id === saved) ? saved : LIBS[0].id);
+  await openLibrary(LIBS[0].id);            // always the published copy, never a remembered file
   // then hand over to the DCS folder from last time, if it is still reachable
   if (!FSA || !window.indexedDB) return;
   const dir = await recall();
   if (!dir) return;
-  if (await dir.queryPermission({ mode: "readwrite" }) === "granted") return useDir(dir);
-  const b = $("#reconnect");                               // regaining access needs a click
+  const b = $("#reconnect");                               // opening DCS is always a deliberate click
   b.textContent = `Reopen ${dir.name}`;
   b.hidden = false;
   b.onclick = async () => {
-    if (await dir.requestPermission({ mode: "readwrite" }) !== "granted") return;
+    if (await dir.queryPermission({ mode: "readwrite" }) !== "granted" &&
+        await dir.requestPermission({ mode: "readwrite" }) !== "granted") return;
     b.hidden = true;
     useDir(dir);
   };
@@ -642,14 +638,17 @@ function loadText(name, src) {
   parseLua(src);
   S.tab = 0;
   const l = LIBS.find(x => x.rich === S.rich);              // header follows what is actually loaded
-  if (l) { S.lib = l.id; try { localStorage.setItem("rwr-lib", l.id); } catch (e) {} }
+  if (l) S.lib = l.id;
   paintLibs();
   render(); renderPrint();
   const codes = new Set(S.entries.filter(e => !e.dead).map(e => e.code));
   S.summary = `${name} - ${S.entries.length} units, ${codes.size} codes, ${S.tables.length} pages` +
               (S.dir ? "" : " (read only copy, Save will download it)");
-  // guard: an untouched file must save back byte for byte, or the exporter is losing something
-  S.safe = buildLua() === src.replace(/\r\n/g, "\n");
+  // guard: an untouched file must save back byte for byte apart from the editor's own
+  // marker comments, which a file being opened for the first time will not have yet
+  const body = t => t.replace(/\r\n/g, "\n").split("\n")
+                     .filter(l => !/^-- RWR-EDITOR-(LINKS|DOC) /.test(l)).join("\n").replace(/\s*$/, "\n");
+  S.safe = body(buildLua()) === body(src);
   if (!S.safe) { S.summary += "  ⚠ this file did not round-trip, Save will not overwrite it";
                  console.warn("round-trip mismatch"); }
   $("#status").textContent = S.summary;
