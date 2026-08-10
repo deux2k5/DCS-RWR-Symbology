@@ -610,8 +610,8 @@ async function recall() {
 (async function boot() {
   let saved = null;
   try { saved = localStorage.getItem("rwr-lib"); } catch (e) {}
-  if (saved && LIBS.some(l => l.id === saved)) await openLibrary(saved);   // last library you chose
-  else { paintLibs(); chooser(); }                                          // first visit: choose
+  // open the published copy of the library you used last, F-15E the first time
+  await openLibrary(LIBS.some(l => l.id === saved) ? saved : LIBS[0].id);
   // then hand over to the DCS folder from last time, if it is still reachable
   if (!FSA || !window.indexedDB) return;
   const dir = await recall();
