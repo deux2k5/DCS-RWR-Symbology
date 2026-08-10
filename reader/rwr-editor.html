@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RWR Editor</title>
+<style>
+/* ---------- screen UI ---------- */
+:root { --bd:#c9d2d9; --ink:#202b37; --accent:#41566b; }
+* { box-sizing:border-box; }
+body { margin:0; font:13px/1.45 "Segoe UI",system-ui,sans-serif; color:var(--ink); background:#eef1f4; }
+header { position:sticky; top:0; z-index:9; background:#202b37; color:#fff;
+         padding:8px 14px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+header h1 { font-size:14px; margin:0 8px 0 0; font-weight:600; letter-spacing:.4px; }
+button, label.btn { background:var(--accent); color:#fff; border:0; padding:6px 11px; border-radius:4px;
+                    cursor:pointer; font:inherit; }
+button:hover, label.btn:hover { background:#52697f; }
+button.mini { padding:1px 7px; background:#e9eef2; color:var(--accent); font-size:12px; }
+button.mini:hover { background:#d3dde4; }
+button.danger:hover { background:#c04a3d; color:#fff; }
+#status { margin-left:auto; opacity:.8; font-size:12px; }
+#search { width:280px; border:0; border-radius:4px; padding:6px 9px; }
+#tabs { flex-basis:100%; display:flex; gap:4px; margin:6px 0 -8px; }
+#tabs button { background:transparent; border-radius:0; border-bottom:3px solid transparent;
+               padding:6px 14px; opacity:.65; }
+#tabs button:hover { background:#2c3a49; }
+#tabs button.on { opacity:1; font-weight:600; border-bottom-color:#8798a7; background:transparent; }
+.hint { padding:6px 14px; background:#fffbe6; border-bottom:1px solid #e8dfb0; font-size:12px; }
+.wrap { max-width:1240px; margin:0 auto; padding:14px; }
+
+.ptools { display:flex; align-items:center; gap:10px; margin:0 0 10px; font-size:12px; opacity:.75; }
+.ptools button { margin-left:auto; }
+
+.card { background:#fff; border:1px solid var(--bd); border-radius:6px; margin-bottom:10px; }
+.card.miss { border-color:#e0b04a; }
+.chead { display:flex; align-items:center; gap:10px; padding:7px 10px; border-bottom:1px solid var(--bd);
+         background:#f6f8f9; border-radius:6px 6px 0 0; }
+.chead input.code { width:52px; text-align:center; font-weight:700; font-size:15px; letter-spacing:1px; }
+.chead .lbl { font-size:12px; opacity:.65; }
+.chead .acts { margin-left:auto; display:flex; gap:4px; }
+.badge { background:#fbe9c0; border:1px solid #e0b04a; border-radius:10px; padding:0 8px; font-size:11px; }
+.cbody { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:10px; }
+@media (max-width:1000px) { .cbody { grid-template-columns:1fr; } }
+h4 { margin:0 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.6px; opacity:.55; }
+.pline { display:grid; grid-template-columns:88px 1fr auto; gap:4px 6px; align-items:start;
+         margin-bottom:6px; padding-bottom:6px; }
+.pline + .pline { border-top:1px dashed var(--bd); padding-top:6px; }
+.pline label { font-size:12px; opacity:.7; padding-top:3px; }
+input, textarea, select { font:inherit; color:inherit; border:1px solid var(--bd); border-radius:3px;
+                          padding:2px 5px; background:#fff; width:100%; }
+textarea { resize:vertical; }
+:focus { outline:2px solid #8798a7; outline-offset:-1px; }
+table.units { width:100%; border-collapse:collapse; }
+table.units th { font-size:11px; text-align:left; opacity:.55; font-weight:600; padding:0 3px 3px; }
+table.units td { padding:1px 2px; }
+.none { font-size:12px; opacity:.55; padding:4px 0; }
+.empty { padding:60px; text-align:center; color:#7b8a97; font-size:15px; }
+
+/* ---------- printed document (matches 15e Codes.pdf) ---------- */
+#print { position:absolute; left:-10000px; top:0; width:792px; background:#fff; }
+#print.show { position:static; margin:14px auto; box-shadow:0 0 0 1px var(--bd); }
+table.doc {
+  table-layout:fixed; width:791px; margin:0 auto; border-collapse:collapse;
+  font-family:Calibri,"Carlito",sans-serif; font-size:calc(9.5pt * var(--k,1));
+  color:#202b37; white-space:pre-wrap;
+}
+table.doc + table.doc { break-before:page; page-break-before:always; }
+table.doc th, table.doc td {
+  border:1px solid #8798a7; padding:calc(3px * var(--k,1)) calc(4px * var(--k,1));
+  line-height:1.08; vertical-align:middle; text-align:left;
+}
+table.doc th { font-size:calc(10pt * var(--k,1)); font-weight:bold; color:#ababab; text-align:center; }
+table.doc td.code { font-weight:bold; text-align:center; }
+
+@page { size:letter; margin:13px 12px; }
+@media print {
+  body { background:#fff; }
+  body > *:not(#print) { display:none !important; }
+  #print { position:static !important; left:auto !important; width:auto !important;
+           margin:0 !important; box-shadow:none !important; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>RWR Editor</h1>
+  <button id="open">Open .lua</button>
+  <button id="reconnect" hidden></button>
+  <input type="file" id="file" accept=".lua" hidden>
+  <button id="save">Save .lua</button>
+  <button id="pdf">Save PDF</button>
+  <button id="preview">Preview PDF</button>
+  <input id="search" type="search" placeholder="search a code, a unit or any text">
+  <span id="status">no file loaded</span>
+  <div id="tabs"></div>
+</header>
+
+<div class="hint"><b>Open .lua</b> asks for the folder holding the F-15E's <b>ALR56C_LIB.lua</b>, normally
+  <code>&lt;DCS install&gt;\Mods\aircraft\F-15E\Cockpit\Scripts</code>. Pick it once and Chrome reopens there
+  next time. <b>Save .lua</b> then writes straight back to the game, keeping the version it replaced as
+  <b>ALR56C_LIB.lua.bak</b> in the same folder.<br>
+  <b>Save PDF</b> makes the reference sheet: in the print dialog choose <b>Save as PDF</b>,
+  margins <b>Default</b>, scale <b>100%</b>, headers and footers <b>off</b>.</div>
+
+<div class="wrap" id="app"><div class="empty">Open <b>ALR56C_LIB.lua</b> to begin.</div></div>
+
+<div id="print"></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const ENTRY_RE = /^(\s*)rwr_codes\s*\[\s*"((?:[^"\\]|\\.)*)"\s*\]\s*=\s*\{([^}]*)\}[ \t]*(--.*)?$/;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const luaStr = s => String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+const PAGE_NAMES = ["Aircraft", "Ground systems", "Ships & naval"];
+const pageName = ti => PAGE_NAMES[ti] || "Page " + (ti + 1);
+
+const S = { lines: [], entries: [], tables: [], links: {}, name: "ALR56C_LIB.lua", tab: 0,
+            dir: null, handle: null, safe: true, summary: "" };
+
+/* ================= import ================= */
+function parseLua(text) {
+  S.lines = text.split(/\r?\n/);
+  S.entries = []; S.tables = []; S.links = {};
+  S.lines.forEach((line, i) => {
+    const m = line.match(ENTRY_RE);
+    if (!m) return;
+    const b = m[3], g = re => (b.match(re) || [, ""])[1];
+    S.entries.push({
+      line: i, raw: line, key: m[2], comment: (m[4] || "").trim(), dirty: false, dead: false,
+      code: g(/code\s*=\s*"([^"]*)"/), coal: g(/coal\s*=\s*(\d+)/), desc: g(/desc\s*=\s*"([^"]*)"/)
+    });
+  });
+  const lk = text.match(/^-- RWR-EDITOR-LINKS (.*)$/m);
+  const dc = text.match(/^-- RWR-EDITOR-DOC (.*)$/m);
+  if (lk) try { S.links = JSON.parse(lk[1]); } catch (e) {}
+  if (dc) try { S.tables = JSON.parse(dc[1]).map(t => ({
+    headers: t.headers.slice(),
+    rows: t.rows.map((r, i) => ({ id: r.id, className: r.className || "plain",
+                                  code: (r.code || i === 0) ? (r.code ? r.code.value : "") : null,
+                                  cells: r.cells.slice() }))
+  })); } catch (e) {}
+  if (!S.tables.length) S.tables = [blankTable(0)];
+}
+const blankTable = i => ({ headers: ["Code", "System", "Source Mod", "Description"], rows: [] });
+
+/* ================= export ================= */
+function exportDoc() {
+  return S.tables.map(t => ({
+    headers: t.headers.slice(),
+    rows: t.rows.map((r, i) => {
+      const g = t.rows[groupStart(t.rows, i)];
+      return { id: g.id, className: g.className,
+               code: r.code === null ? null : { value: r.code, rowspan: groupLen(t.rows, groupStart(t.rows, i)) },
+               cells: r.cells.slice() };
+    })
+  }));
+}
+const groupStart = (rows, i) => { while (i > 0 && rows[i].code === null) i--; return i; };
+const groupLen = (rows, i) => { let n = 1; while (rows[i + n] && rows[i + n].code === null) n++; return n; };
+
+function reshade(t) {                       // code groups alternate plain / shade, as in the source doc
+  let cls = t.rows.length && t.rows[0].className === "shade" ? "shade" : "plain";
+  t.rows.forEach((r, i) => { if (i && r.code !== null) cls = cls === "plain" ? "shade" : "plain";
+                             if (r.code !== null) r.className = cls; });
+}
+
+function luaEntry(e) {
+  const pad = " ".repeat(Math.max(1, 33 - e.key.length));
+  const coal = String(e.coal).replace(/\D/g, "") || "2";
+  return `rwr_codes["${luaStr(e.key)}"${pad}] = { code = "${luaStr(e.code)}", coal = ${coal}, ` +
+         `desc = "${luaStr(e.desc)}" }` + (e.comment ? " " + e.comment : "");
+}
+
+function buildLua() {
+  const out = S.lines.slice(), added = [];
+  let last = -1;
+  for (const e of S.entries) {
+    if (e.line < 0) { if (!e.dead) added.push(luaEntry(e)); continue; }
+    last = Math.max(last, e.line);
+    out[e.line] = e.dead ? null : (e.dirty ? luaEntry(e) : e.raw);
+  }
+  if (added.length) out.splice(last + 1, 0, ...added);
+  let text = out.filter(l => l !== null)
+                .filter(l => !/^-- RWR-EDITOR-(LINKS|DOC) /.test(l))
+                .join("\n").replace(/\s*$/, "\n");
+  const links = {};
+  for (const e of S.entries) if (!e.dead && S.links[e.key]) links[e.key] = S.links[e.key];
+  return text + "\n-- RWR-EDITOR-LINKS " + JSON.stringify(links) +
+                "\n-- RWR-EDITOR-DOC " + JSON.stringify(exportDoc()) + "\n";
+}
+
+function download(name, text) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+/* ================= the link: code groups <-> lua units ================= */
+function groupsOf(ti) {                     // one entry per code block on that page
+  const g = [];
+  S.tables[ti].rows.forEach((r, i) => {
+    if (r.code === null && g.length) g[g.length - 1].rows.push(i);
+    else g.push({ ti, head: i, code: r.code || "", id: r.id, rows: [i] });
+  });
+  return g;
+}
+const allGroups = () => S.tables.flatMap((t, ti) => groupsOf(ti));
+
+const toks = s => new Set(String(s).toLowerCase().match(/[a-z0-9]{2,}/g) || []);
+function groupText(g) { return g.rows.map(i => S.tables[g.ti].rows[i].cells.join(" ")).join(" "); }
+
+/* which code block lists this unit - only ever a question when one code sits on two pages */
+function homeOf(e, gs) {
+  if (gs.length < 2) return gs[0] || null;
+  const pinned = gs.find(g => g.id === S.links[e.key]);
+  if (pinned) return pinned;
+  const want = new Set([...toks(e.desc), ...toks(e.key)]);
+  let best = gs[0], bestN = -1;
+  for (const g of gs) {
+    const t = toks(groupText(g));
+    let n = 0; want.forEach(w => { if (t.has(w)) n++; });
+    if (n > bestN) { bestN = n; best = g; }
+  }
+  return best;
+}
+
+function join() {                           // -> { groups, unitsFor:Map, orphans:Map(code->units) }
+  const groups = allGroups();
+  const byCode = new Map();
+  groups.forEach(g => { if (!byCode.has(g.code)) byCode.set(g.code, []); byCode.get(g.code).push(g); });
+  const unitsFor = new Map(groups.map(g => [g.ti + ":" + g.head, []]));
+  const orphans = new Map();
+  for (const e of S.entries) {
+    if (e.dead) continue;
+    const gs = byCode.get(e.code) || [];
+    const h = homeOf(e, gs);
+    if (h) unitsFor.get(h.ti + ":" + h.head).push(e);
+    else { if (!orphans.has(e.code)) orphans.set(e.code, []); orphans.get(e.code).push(e); }
+  }
+  return { groups, byCode, unitsFor, orphans };
+}
+
+/* ================= screen ================= */
+let J = null;                                // last join, so handlers can look things up
+
+function matches(g, units, q) {
+  if (!q) return true;
+  return (g.code + " " + groupText(g) + " " + units.map(u => u.key + " " + u.desc).join(" "))
+         .toLowerCase().includes(q);
+}
+
+function render() {
+  if (!S.entries.length && !S.tables.some(t => t.rows.length)) return;
+  J = join();
+  const q = $("#search").value.trim().toLowerCase();
+  const hits = S.tables.map((t, ti) => J.groups.filter(g => g.ti === ti &&
+                 matches(g, J.unitsFor.get(g.ti + ":" + g.head), q)).length);
+
+  if (S.tab !== "orphans" && !S.tables[S.tab]) S.tab = 0;
+  $("#tabs").innerHTML = S.tables.map((t, ti) =>
+      `<button data-tab="${ti}" class="${S.tab === ti ? "on" : ""}">${esc(pageName(ti))}${
+        q ? ` (${hits[ti]})` : ""}</button>`).join("") +
+    (J.orphans.size ? `<button data-tab="orphans" class="${S.tab === "orphans" ? "on" : ""}">Not on the PDF yet (${J.orphans.size})</button>` : "");
+
+  if (S.tab === "orphans") {
+    $("#app").innerHTML = `<div class="ptools">These codes are used in the .lua but have no row on the
+        reference sheet. Pick a page to put them on.</div>` +
+      [...J.orphans].map(([code, units]) => orphanCard(code, units)).join("");
+    return;
+  }
+  const gs = J.groups.filter(g => g.ti === S.tab);
+  const cards = gs.map((g, gi) => card(g, gi, gs.length, q)).filter(Boolean);
+  $("#app").innerHTML = `<div class="ptools">
+      <span>${q ? `${cards.length} of ${gs.length} codes match` : `${gs.length} codes on this page`}</span>
+      <button class="mini" data-k="addcode" data-ti="${S.tab}">+ add a code to this page</button></div>` +
+    (cards.join("") || '<div class="none">nothing matches the search on this page</div>');
+}
+
+$("#tabs").addEventListener("click", ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  S.tab = b.dataset.tab === "orphans" ? "orphans" : +b.dataset.tab;
+  render();
+  scrollTo({ top: 0 });
+});
+
+function card(g, gi, n, q) {
+  const t = S.tables[g.ti], units = J.unitsFor.get(g.ti + ":" + g.head);
+  if (!matches(g, units, q)) return "";
+  const shared = (J.byCode.get(g.code) || []).length > 1;
+
+  const lines = g.rows.map((ri, li) => {
+    const r = t.rows[ri];
+    return `<div class="pline">` + r.cells.map((c, ci) => `
+        <label>${esc(t.headers[ci + 1] || "Column " + (ci + 2))}</label>
+        <textarea rows="${(c.match(/\n/g) || []).length + 1}"
+                  data-k="cell" data-ti="${g.ti}" data-ri="${ri}" data-ci="${ci}">${esc(c)}</textarea>
+        ${ci === 0 ? (g.rows.length > 1
+            ? `<button class="mini danger" title="remove this line" data-k="delline" data-ti="${g.ti}" data-ri="${ri}">&times;</button>`
+            : "<span></span>") : "<span></span>"}`).join("") + `</div>`;
+  }).join("");
+
+  const urows = units.map(e => `<tr>
+      <td><input value="${esc(e.key)}" data-k="ukey" data-u="${S.entries.indexOf(e)}"
+                 title="the unit's type name in DCS - must match the game exactly"></td>
+      <td><input value="${esc(e.desc)}" data-k="udesc" data-u="${S.entries.indexOf(e)}"></td>
+      <td><select data-k="ucoal" data-u="${S.entries.indexOf(e)}">
+            <option value="1"${e.coal == 1 ? " selected" : ""}>Blue</option>
+            <option value="2"${e.coal == 2 ? " selected" : ""}>Red</option></select></td>
+      ${shared ? `<td><select style="min-width:118px" data-k="uhome" data-u="${S.entries.indexOf(e)}">` +
+            J.byCode.get(g.code).map(o => `<option value="${esc(o.id)}"${o.head === g.head && o.ti === g.ti ? " selected" : ""}>${esc(pageName(o.ti))}</option>`).join("") +
+          `</select></td>` : ""}
+      <td><button class="mini danger" data-k="delunit" data-u="${S.entries.indexOf(e)}">&times;</button></td></tr>`).join("");
+
+  return `<div class="card${units.length ? "" : " miss"}">
+    <div class="chead">
+      <input class="code" maxlength="2" value="${esc(g.code)}" data-k="code" data-ti="${g.ti}" data-head="${g.head}"
+             title="the two characters the RWR draws on screen">
+      <span class="lbl">prints on page ${g.ti + 1} of the sheet</span>
+      ${units.length ? "" : '<span class="badge">no DCS unit uses this code</span>'}
+      <span class="acts">
+        <button class="mini" data-k="up" data-ti="${g.ti}" data-head="${g.head}" ${gi === 0 ? "disabled" : ""}>&#8593;</button>
+        <button class="mini" data-k="down" data-ti="${g.ti}" data-head="${g.head}" ${gi === n - 1 ? "disabled" : ""}>&#8595;</button>
+        <button class="mini danger" data-k="delcode" data-ti="${g.ti}" data-head="${g.head}">remove</button>
+      </span>
+    </div>
+    <div class="cbody">
+      <div>
+        <h4>What the PDF shows</h4>
+        ${lines}
+        <button class="mini" data-k="addline" data-ti="${g.ti}" data-head="${g.head}">+ split into another line</button>
+      </div>
+      <div>
+        <h4>DCS units that show this code (${units.length})</h4>
+        <table class="units"><thead><tr><th>DCS unit name</th><th>RWR label</th><th style="width:64px">Side</th>
+          ${shared ? "<th style='width:110px'>Listed under</th>" : ""}<th style="width:26px"></th></tr></thead>
+          <tbody>${urows || '<tr><td colspan="4" class="none">none yet</td></tr>'}</tbody></table>
+        <button class="mini" data-k="addunit" data-ti="${g.ti}" data-head="${g.head}">+ add a DCS unit</button>
+      </div>
+    </div></div>`;
+}
+
+function orphanCard(code, units) {
+  return `<div class="card miss"><div class="chead">
+      <input class="code" maxlength="2" value="${esc(code)}" disabled>
+      <span class="lbl">${units.length} DCS unit(s) use this code but it is not on the reference sheet</span>
+      <span class="acts">put it on
+        <select data-k="adopt" data-code="${esc(code)}">
+          <option value="">choose a page...</option>
+          ${S.tables.map((t, ti) => `<option value="${ti}">page ${ti + 1} - ${esc(pageName(ti))}</option>`).join("")}
+        </select></span></div>
+      <div class="cbody"><div><h4>DCS units</h4>
+        ${units.map(u => `<div class="none">${esc(u.key)} - ${esc(u.desc)}</div>`).join("")}
+      </div></div></div>`;
+}
+
+/* ---- edits that only change text: update the model, leave the DOM alone ---- */
+$("#app").addEventListener("input", ev => {
+  const d = ev.target.dataset, v = ev.target.value;
+  if (d.k === "cell") { S.tables[+d.ti].rows[+d.ri].cells[+d.ci] = v; return; }
+  if (d.k === "udesc") { const e = S.entries[+d.u]; e.desc = v; e.dirty = true; return; }
+  if (d.k === "ukey") {
+    const e = S.entries[+d.u];
+    if (S.links[e.key]) { S.links[v] = S.links[e.key]; delete S.links[e.key]; }
+    e.key = v; e.dirty = true; return;
+  }
+});
+
+/* ---- edits that change structure: update, then redraw ---- */
+$("#app").addEventListener("change", ev => {
+  const d = ev.target.dataset, v = ev.target.value;
+  if (d.k === "ucoal") { const e = S.entries[+d.u]; e.coal = v; e.dirty = true; return; }
+  if (d.k === "uhome") { S.links[S.entries[+d.u].key] = v; return render(); }
+  if (d.k === "code") {                              // renaming a code moves its units with it
+    const t = S.tables[+d.ti], g = groupsOf(+d.ti).find(x => x.head === +d.head), old = g.code;
+    if (!v || v === old) { ev.target.value = old; return; }
+    const mine = J.unitsFor.get(g.ti + ":" + g.head) || [];
+    g.rows.forEach(i => { if (t.rows[i].code !== null) t.rows[i].code = v; });
+    mine.forEach(e => { e.code = v; e.dirty = true; });
+    return render();
+  }
+  if (d.k === "adopt" && v !== "") {                 // give an unlisted code a row on the PDF
+    const ti = +v, t = S.tables[ti], u = J.orphans.get(d.code)[0];
+    t.rows.push({ id: nextId(ti), className: "plain", code: d.code,
+                  cells: t.headers.slice(1).map((h, i) => i === 0 ? u.desc : "") });
+    reshade(t); return render();
+  }
+});
+
+$("#app").addEventListener("click", ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  if (b.dataset.k === "pick") return openFromDir(b.dataset.name);
+  const d = b.dataset, ti = +d.ti, t = S.tables[ti];
+  const g = d.head !== undefined ? groupsOf(ti).find(x => x.head === +d.head) : null;
+
+  if (d.k === "addcode") {
+    t.rows.push({ id: nextId(ti), className: "plain", code: "??", cells: t.headers.slice(1).map(() => "") });
+  } else if (d.k === "delcode") {
+    const units = J.unitsFor.get(ti + ":" + g.head);
+    if (!confirm(`Remove code "${g.code}"?\n\nThis deletes ${g.rows.length} line(s) from the PDF` +
+                 (units.length ? ` and ${units.length} DCS unit(s) from the .lua.` : ".")))  return;
+    units.forEach(e => e.dead = true);
+    t.rows = t.rows.filter((r, i) => !g.rows.includes(i));
+  } else if (d.k === "addline") {
+    t.rows.splice(g.rows[g.rows.length - 1] + 1, 0,
+                  { id: g.id, className: "plain", code: null, cells: t.headers.slice(1).map(() => "") });
+  } else if (d.k === "delline") {
+    const ri = +d.ri, head = groupStart(t.rows, ri);
+    if (ri === head && t.rows[ri + 1] && t.rows[ri + 1].code === null) t.rows[ri + 1].code = t.rows[ri].code;
+    t.rows.splice(ri, 1);
+  } else if (d.k === "addunit") {
+    S.entries.push({ line: -1, raw: "", key: "New unit name", code: g.code, coal: "2",
+                     desc: (t.rows[g.head].cells[0] || "").split(/[/;\n]/)[0].trim() || "NEW",
+                     comment: "", dirty: true, dead: false });
+    if ((J.byCode.get(g.code) || []).length > 1) S.links[S.entries[S.entries.length - 1].key] = g.id;
+  } else if (d.k === "delunit") {
+    S.entries[+d.u].dead = true;
+  } else if (d.k === "up" || d.k === "down") {
+    const gs = groupsOf(ti), i = gs.findIndex(x => x.head === g.head), j = i + (d.k === "up" ? -1 : 1);
+    if (j < 0 || j >= gs.length) return;
+    const block = g.rows.map(x => t.rows[x]);
+    t.rows.splice(g.rows[0], block.length);
+    t.rows.splice(d.k === "up" ? gs[j].rows[0] : gs[j].rows[0] + gs[j].rows.length - block.length, 0, ...block);
+  } else return;
+
+  reshade(t); render();
+});
+function nextId(ti) {
+  const n = S.tables[ti].rows.reduce((m, r) => Math.max(m, +String(r.id).split("-")[1] || 0), 0);
+  return ti + "-" + (n + 1);
+}
+$("#search").addEventListener("input", render);
+
+/* ================= printed document ================= */
+const PAGE_H = 1056 - 26;      // letter at 96dpi minus the 13px @page margins
+const COLW = { 4: [44, 315, 198, 233],          // column widths, must total 790
+               5: [44, 235, 181, 140, 190] };   // Code, System, RWR Label, Radar Type, Source Mod
+
+function renderPrint() {
+  $("#print").innerHTML = S.tables.map(t => {
+    const w = COLW[t.headers.length] ||
+              t.headers.map((h, i) => i ? Math.floor(747 / (t.headers.length - 1)) : 44);
+    const cols = w.map(px => `<col style="width:${px}px">`).join("");
+    const head = "<tr>" + t.headers.map(h => `<th>${esc(h)}</th>`).join("") + "</tr>";
+    const body = t.rows.map((r, i) => "<tr>" +
+        (r.code === null ? "" : `<td class="code" rowspan="${groupLen(t.rows, i)}">${esc(r.code)}</td>`) +
+        r.cells.map(c => `<td>${esc(c)}</td>`).join("") + "</tr>").join("");
+    return `<table class="doc">${cols}${head}${body}</table>`;
+  }).join("");
+  autofit();
+}
+
+/* shrink a page until it fits on one sheet - this is how the reference PDF was produced */
+function autofit() {
+  for (const tbl of $("#print").querySelectorAll("table.doc")) {
+    let k = 1; tbl.style.setProperty("--k", k);
+    while (tbl.offsetHeight > PAGE_H && k > 0.5) { k = +(k - 0.01).toFixed(2); tbl.style.setProperty("--k", k); }
+  }
+}
+
+/* ================= shell ================= */
+$("#preview").addEventListener("click", () => {
+  renderPrint();
+  const on = $("#print").classList.toggle("show");
+  $("#app").hidden = on;
+  $("#preview").textContent = on ? "Back to editing" : "Preview PDF";
+});
+$("#pdf").addEventListener("click", () => { renderPrint(); window.print(); });
+window.addEventListener("beforeprint", renderPrint);
+
+/* ---- open: pick the Scripts folder, which Chrome then reopens on later visits.
+       It has to be the folder and not the file: a file handle cannot reach its own
+       directory, so writing ALR56C_LIB.lua.bak next to it would be impossible. ---- */
+const FSA = !!window.showDirectoryPicker;
+const MAIN = "ALR56C_LIB.lua";
+
+$("#open").addEventListener("click", async () => {
+  if (!FSA) return $("#file").click();                     // other browsers: plain file input
+  let dir;
+  try { dir = await showDirectoryPicker({ id: "dcs-rwr-lua", mode: "readwrite" }); }
+  catch (e) { return; }                                    // cancelled
+  useDir(dir);
+});
+
+async function useDir(dir) {
+  const luas = [];
+  for await (const [name, h] of dir.entries())
+    if (h.kind === "file" && name.toLowerCase().endsWith(".lua")) luas.push(name);
+  if (!luas.length) { alert("No .lua file in that folder.\n\nPick the folder holding " + MAIN +
+                            ", normally\n<DCS install>\\Mods\\aircraft\\F-15E\\Cockpit\\Scripts");
+                      return false; }
+  S.dir = dir;
+  remember(dir);
+  const pick = luas.includes(MAIN) ? MAIN : luas.length === 1 ? luas[0] : null;
+  if (pick) { await openFromDir(pick); return true; }
+  $("#app").innerHTML = '<div class="ptools">Which file?</div>' + luas.map(n =>
+      `<div class="card"><div class="chead"><button data-k="pick" data-name="${esc(n)}">${esc(n)}</button></div></div>`).join("");
+  return true;
+}
+
+/* remember the folder between visits. Needs IndexedDB, which is unavailable on file:// */
+const idbStore = mode => new Promise((res, rej) => {
+  const r = indexedDB.open("rwr-editor", 1);
+  r.onupgradeneeded = () => r.result.createObjectStore("handles");
+  r.onsuccess = () => res(r.result.transaction("handles", mode).objectStore("handles"));
+  r.onerror = () => rej(r.error);
+});
+const idbReq = q => new Promise((res, rej) => { q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+
+async function remember(dir) {
+  try { await idbReq((await idbStore("readwrite")).put(dir, "dir")); } catch (e) {}
+}
+async function recall() {
+  try {
+    const dir = await idbReq((await idbStore("readonly")).get("dir"));
+    return dir && typeof dir.queryPermission === "function" ? dir : null;
+  } catch (e) { return null; }
+}
+
+(async function reopenLastFolder() {
+  if (!FSA || !window.indexedDB) return;
+  const dir = await recall();
+  if (!dir) return;
+  if (await dir.queryPermission({ mode: "readwrite" }) === "granted") return useDir(dir);
+  const b = $("#reconnect");                               // regaining access needs a click
+  b.textContent = `Reopen ${dir.name}`;
+  b.hidden = false;
+  b.onclick = async () => {
+    if (await dir.requestPermission({ mode: "readwrite" }) !== "granted") return;
+    b.hidden = true;
+    useDir(dir);
+  };
+})();
+async function openFromDir(name) {
+  const h = await S.dir.getFileHandle(name);
+  S.handle = h;
+  loadText(name, await (await h.getFile()).text());
+}
+$("#file").addEventListener("change", async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  S.dir = S.handle = null;
+  loadText(f.name, await f.text());
+});
+
+function loadText(name, src) {
+  S.name = name;
+  parseLua(src);
+  S.tab = 0;
+  render(); renderPrint();
+  const codes = new Set(S.entries.filter(e => !e.dead).map(e => e.code));
+  S.summary = `${name} - ${S.entries.length} units, ${codes.size} codes, ${S.tables.length} pages` +
+              (S.dir ? "" : " (read only copy, Save will download it)");
+  // guard: an untouched file must save back byte for byte, or the exporter is losing something
+  S.safe = buildLua() === src.replace(/\r\n/g, "\n");
+  if (!S.safe) { S.summary += "  ⚠ this file did not round-trip, Save will not overwrite it";
+                 console.warn("round-trip mismatch"); }
+  $("#status").textContent = S.summary;
+  if (location.hash === "#selftest") selftest(src);
+}
+
+/* ---- save: copy the file to NAME.bak, then write over it ---- */
+const note = m => { $("#status").textContent = m;
+                    setTimeout(() => $("#status").textContent = S.summary || m, 5000); };
+
+async function write(dir, name, text) {
+  const h = await dir.getFileHandle(name, { create: true });
+  const w = await h.createWritable();
+  await w.write(text); await w.close();
+}
+
+$("#save").addEventListener("click", async () => {
+  const text = buildLua();
+  if (!S.dir || !S.safe) {                                  // never overwrite a file we cannot reproduce
+    download(S.name, text);
+    return note(S.safe ? `no folder access, downloaded ${S.name} instead`
+                       : "this file did not round-trip, downloaded it instead of overwriting");
+  }
+  try {
+    if (await S.dir.queryPermission({ mode: "readwrite" }) !== "granted" &&
+        await S.dir.requestPermission({ mode: "readwrite" }) !== "granted") {
+      download(S.name, text);
+      return note("DCS folder is read only here, downloaded instead");
+    }
+    const old = await (await S.handle.getFile()).text();
+    if (old) await write(S.dir, S.name + ".bak", old);       // previous version, rolling
+    await write(S.dir, S.name, text);
+    note(`saved ${S.name}, previous version kept as ${S.name}.bak`);
+  } catch (e) {
+    download(S.name, text);
+    note("could not write there, downloaded instead: " + e.message);
+  }
+});
+
+/* open rwr-editor.html#selftest and load the .lua to run this - it drives the real controls */
+function selftest(src) {
+  const log = [], ok = (c, m) => log.push((c ? "PASS " : "FAIL ") + m);
+  const codes = ti => groupsOf(ti).map(g => g.code).join(",");
+  const hit = (k, head, extra) => {                        // click a control inside a code card
+    const sel = `[data-k="${k}"][data-ti="1"]` + (head === undefined ? "" : `[data-head="${head}"]`) +
+                (extra ? `[data-ri="${extra}"]` : "");
+    const el = $("#app").querySelector(sel);
+    if (el) el.click(); else ok(false, "control not found: " + sel);
+  };
+
+  ok(buildLua() === src.replace(/\r\n/g, "\n"), "untouched round-trip is byte identical");
+  const j = join();
+  ok(j.orphans.size === 0, "every lua code has a PDF row");
+  ok(j.groups.every(g => g.code), "every PDF row block has a code");
+  ok([...j.unitsFor.values()].reduce((n, u) => n + u.length, 0) === S.entries.filter(e => !e.dead).length,
+     "every unit is listed under exactly one code block");
+
+  S.tab = 1; render();                                     // the controls below live on the ground tab
+  ok($("#tabs").querySelectorAll("button").length === S.tables.length, "one tab per page of the sheet");
+  ok($("#app").querySelectorAll(".card").length === groupsOf(1).length, "the active tab shows only its own codes");
+
+  const before = codes(1);
+  hit("up", groupsOf(1)[2].head);
+  ok(codes(1).split(",")[1] === before.split(",")[2], "move up swaps a code with the one above it");
+  hit("down", groupsOf(1)[1].head);
+  ok(codes(1) === before, "move down puts it back");
+
+  hit("addline", groupsOf(1)[0].head);
+  ok(exportDoc()[1].rows[0].code.rowspan === 3, "splitting a code into another line grows its rowspan");
+  hit("delline", undefined, groupsOf(1)[0].rows[0]);
+  ok(exportDoc()[1].rows[0].code.rowspan === 2 && groupsOf(1)[0].code === before.split(",")[0],
+     "removing the first line keeps the code on the group");
+
+  const g0 = groupsOf(1)[0], mine = join().unitsFor.get("1:" + g0.head).map(e => e.key);
+  const box = $("#app").querySelector(`input[data-k="code"][data-ti="1"][data-head="${g0.head}"]`);
+  box.value = "ZZ"; box.dispatchEvent(new Event("change", { bubbles: true }));
+  const out = buildLua();
+  ok(mine.length > 0 && mine.every(k => new RegExp(`rwr_codes\\["${k}"\\s*\\] = \\{ code = "ZZ"`).test(out)),
+     `renaming a code rewrites its ${mine.length} units in the .lua`);
+  ok(JSON.parse(out.match(/^-- RWR-EDITOR-DOC (.*)$/m)[1])[1].rows[0].code.value === "ZZ",
+     "renaming a code rewrites the PDF row");
+
+  const u = $("#app").querySelector('button[data-k="delunit"]');
+  const gone = S.entries[+u.dataset.u].key;
+  u.click();
+  ok(!buildLua().includes(`rwr_codes["${gone}"`), "deleting a unit drops its lua line");
+
+  parseLua(src); render(); renderPrint();                  // undo every test edit
+  ok(buildLua() === src.replace(/\r\n/g, "\n"), "reload after the test restores the original file");
+  document.querySelectorAll("#print table.doc").forEach((tb, i) =>
+    ok(tb.offsetHeight <= PAGE_H, `page ${i + 1} fits one sheet (h=${tb.offsetHeight}, k=${tb.style.getPropertyValue("--k") || 1})`));
+  console.log(log.join("\n"));
+  $("#status").textContent = "selftest: " + (log.every(l => l[0] === "P") ? "all pass" : log.filter(l => l[0] === "F").join(" | "));
+}
+</script>
+</body>
+</html>
