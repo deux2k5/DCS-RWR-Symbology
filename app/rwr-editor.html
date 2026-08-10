@@ -518,7 +518,15 @@ async function recall() {
   } catch (e) { return null; }
 }
 
-(async function reopenLastFolder() {
+(async function boot() {
+  // start on the copy published alongside the site, read only, so there is always something to look at
+  if (location.protocol.startsWith("http")) {
+    try {
+      const r = await fetch("../dist/" + MAIN);
+      if (r.ok) loadText(MAIN, await r.text());
+    } catch (e) {}
+  }
+  // then hand over to the DCS folder from last time, if it is still reachable
   if (!FSA || !window.indexedDB) return;
   const dir = await recall();
   if (!dir) return;
