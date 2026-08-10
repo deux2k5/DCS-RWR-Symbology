@@ -98,7 +98,9 @@ table.doc td.code { font-weight:bold; text-align:center; }
 <div class="hint"><b>Open .lua</b> asks for the folder holding the F-15E's <b>ALR56C_LIB.lua</b>, normally
   <code>&lt;DCS install&gt;\Mods\aircraft\F-15E\Cockpit\Scripts</code>. Pick it once and Chrome reopens there
   next time. <b>Save .lua</b> then writes straight back to the game, keeping the version it replaced as
-  <b>ALR56C_LIB.lua.bak</b> in the same folder.<br>
+  <b>ALR56C_LIB.lua.bak</b> in the same folder. It also opens ED's
+  <b>AN_ALR_SymbolsBase.lua</b> from <code>Scripts\Aircrafts\_Common\Cockpit</code>, which carries codes
+  only, so the label and side columns are hidden for it.<br>
   <b>Save PDF</b> makes the reference sheet: in the print dialog choose <b>Save as PDF</b>,
   margins <b>Default</b>, scale <b>100%</b>, headers and footers <b>off</b>.</div>
 
@@ -109,28 +111,54 @@ table.doc td.code { font-weight:bold; text-align:center; }
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
-const ENTRY_RE = /^(\s*)rwr_codes\s*\[\s*"((?:[^"\\]|\\.)*)"\s*\]\s*=\s*\{([^}]*)\}[ \t]*(--.*)?$/;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
 const luaStr = s => String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+const pad = (s, n) => s + " ".repeat(Math.max(1, n - s.length));
 const PAGE_NAMES = ["Aircraft", "Ground systems", "Ships & naval"];
-const pageName = ti => PAGE_NAMES[ti] || "Page " + (ti + 1);
+const pageName = ti => (S.tables.length === 3 ? PAGE_NAMES[ti] : null) || "Page " + (ti + 1);
+
+/* The two lua files this understands. rwr_codes carries a side and a label per unit,
+   the ED tables carry only a code, so the extra columns are hidden for those. */
+const FORMATS = [{
+  id: "rwr_codes",                                         // F-15E ALR56C_LIB.lua
+  rich: true,
+  re: /^(\s*)rwr_codes\s*\[\s*"((?:[^"\\]|\\.)*)"\s*\]\s*=\s*\{([^}]*)\}[ \t]*(--.*)?$/,
+  read: m => { const g = re => (m[3].match(re) || [, ""])[1];
+               return { key: m[2], code: g(/code\s*=\s*"([^"]*)"/), coal: g(/coal\s*=\s*(\d+)/),
+                        desc: g(/desc\s*=\s*"([^"]*)"/), comment: (m[4] || "").trim() }; },
+  write: e => `rwr_codes[${pad(`"${luaStr(e.key)}"`, 33)}] = { code = "${luaStr(e.code)}", ` +
+              `coal = ${String(e.coal).replace(/\D/g, "") || "2"}, desc = "${luaStr(e.desc)}" }`
+}, {
+  id: "symbols_strings",                                   // ED AN_ALR_SymbolsBase.lua, by unit name
+  rich: false,
+  re: /^(\s*)\[\s*(['"])(.*?)\2\s*\]\s*=\s*(['"])(.*?)\4\s*,?[ \t]*(--.*)?$/,
+  read: m => ({ key: m[3], code: m[5], coal: "", desc: "", comment: (m[6] || "").trim() }),
+  write: e => "\t" + pad(`['${e.key}']`, 40) + `= '${e.code}',`
+}, {
+  id: "symbols",                                           // ED AN_ALR_SymbolsBase.lua, by wsType
+  rich: false,
+  re: /^(\s*)\{\s*([A-Za-z_]\w*)\s*,\s*(['"])(.*?)\3\s*\}\s*,?[ \t]*(--.*)?$/,
+  read: m => ({ key: m[2], code: m[4], coal: "", desc: "", comment: (m[5] || "").trim() }),
+  write: e => "    " + pad(`{${e.key},`, 24) + `"${e.code}"},`
+}];
+const fmtOf = id => FORMATS.find(f => f.id === id);
 
 const S = { lines: [], entries: [], tables: [], links: {}, name: "ALR56C_LIB.lua", tab: 0,
-            dir: null, handle: null, safe: true, summary: "" };
+            dir: null, handle: null, safe: true, summary: "", rich: true };
 
 /* ================= import ================= */
 function parseLua(text) {
   S.lines = text.split(/\r?\n/);
   S.entries = []; S.tables = []; S.links = {};
   S.lines.forEach((line, i) => {
-    const m = line.match(ENTRY_RE);
-    if (!m) return;
-    const b = m[3], g = re => (b.match(re) || [, ""])[1];
-    S.entries.push({
-      line: i, raw: line, key: m[2], comment: (m[4] || "").trim(), dirty: false, dead: false,
-      code: g(/code\s*=\s*"([^"]*)"/), coal: g(/coal\s*=\s*(\d+)/), desc: g(/desc\s*=\s*"([^"]*)"/)
-    });
+    for (const f of FORMATS) {
+      const m = line.match(f.re);
+      if (!m) continue;
+      S.entries.push(Object.assign({ line: i, raw: line, fmt: f.id, dirty: false, dead: false }, f.read(m)));
+      return;
+    }
   });
+  S.rich = S.entries.some(e => fmtOf(e.fmt).rich);
   const lk = text.match(/^-- RWR-EDITOR-LINKS (.*)$/m);
   const dc = text.match(/^-- RWR-EDITOR-DOC (.*)$/m);
   if (lk) try { S.links = JSON.parse(lk[1]); } catch (e) {}
@@ -140,9 +168,22 @@ function parseLua(text) {
                                   code: (r.code || i === 0) ? (r.code ? r.code.value : "") : null,
                                   cells: r.cells.slice() }))
   })); } catch (e) {}
-  if (!S.tables.length) S.tables = [blankTable(0)];
+  if (!S.tables.length) S.tables = [seedTable()];
 }
 const blankTable = i => ({ headers: ["Code", "System", "Source Mod", "Description"], rows: [] });
+
+/* a file with no stored sheet gets one row per code, left blank for you to fill in */
+function seedTable() {
+  const t = { headers: ["Code", "System", "Notes"], rows: [] };
+  const seen = new Set();
+  S.entries.forEach(e => {
+    if (!e.code || seen.has(e.code)) return;
+    seen.add(e.code);
+    t.rows.push({ id: "0-" + t.rows.length, className: "plain", code: e.code, cells: ["", ""] });
+  });
+  reshade(t);
+  return t;
+}
 
 /* ================= export ================= */
 function exportDoc() {
@@ -166,21 +207,19 @@ function reshade(t) {                       // code groups alternate plain / sha
 }
 
 function luaEntry(e) {
-  const pad = " ".repeat(Math.max(1, 33 - e.key.length));
-  const coal = String(e.coal).replace(/\D/g, "") || "2";
-  return `rwr_codes["${luaStr(e.key)}"${pad}] = { code = "${luaStr(e.code)}", coal = ${coal}, ` +
-         `desc = "${luaStr(e.desc)}" }` + (e.comment ? " " + e.comment : "");
+  return fmtOf(e.fmt).write(e) + (e.comment ? " " + e.comment : "");
 }
 
 function buildLua() {
-  const out = S.lines.slice(), added = [];
-  let last = -1;
+  const out = S.lines.slice(), added = {}, last = {};
   for (const e of S.entries) {
-    if (e.line < 0) { if (!e.dead) added.push(luaEntry(e)); continue; }
-    last = Math.max(last, e.line);
+    if (e.line < 0) { if (!e.dead) (added[e.fmt] = added[e.fmt] || []).push(luaEntry(e)); continue; }
+    last[e.fmt] = Math.max(last[e.fmt] ?? -1, e.line);
     out[e.line] = e.dead ? null : (e.dirty ? luaEntry(e) : e.raw);
   }
-  if (added.length) out.splice(last + 1, 0, ...added);
+  // new entries go in after the last one of their own kind, so they land inside the right table
+  for (const fmt of Object.keys(added).sort((a, b) => (last[b] ?? -1) - (last[a] ?? -1)))
+    out.splice((last[fmt] ?? out.length - 1) + 1, 0, ...added[fmt]);
   let text = out.filter(l => l !== null)
                 .filter(l => !/^-- RWR-EDITOR-(LINKS|DOC) /.test(l))
                 .join("\n").replace(/\s*$/, "\n");
@@ -304,10 +343,10 @@ function card(g, gi, n, q) {
   const urows = units.map(e => `<tr>
       <td><input value="${esc(e.key)}" data-k="ukey" data-u="${S.entries.indexOf(e)}"
                  title="the unit's type name in DCS - must match the game exactly"></td>
-      <td><input value="${esc(e.desc)}" data-k="udesc" data-u="${S.entries.indexOf(e)}"></td>
+      ${!S.rich ? "" : `<td><input value="${esc(e.desc)}" data-k="udesc" data-u="${S.entries.indexOf(e)}"></td>
       <td><select data-k="ucoal" data-u="${S.entries.indexOf(e)}">
             <option value="1"${e.coal == 1 ? " selected" : ""}>Blue</option>
-            <option value="2"${e.coal == 2 ? " selected" : ""}>Red</option></select></td>
+            <option value="2"${e.coal == 2 ? " selected" : ""}>Red</option></select></td>`}
       ${shared ? `<td><select style="min-width:118px" data-k="uhome" data-u="${S.entries.indexOf(e)}">` +
             J.byCode.get(g.code).map(o => `<option value="${esc(o.id)}"${o.head === g.head && o.ti === g.ti ? " selected" : ""}>${esc(pageName(o.ti))}</option>`).join("") +
           `</select></td>` : ""}
@@ -333,7 +372,8 @@ function card(g, gi, n, q) {
       </div>
       <div>
         <h4>DCS units that show this code (${units.length})</h4>
-        <table class="units"><thead><tr><th>DCS unit name</th><th>RWR label</th><th style="width:64px">Side</th>
+        <table class="units"><thead><tr><th>DCS unit name</th>
+          ${S.rich ? "<th>RWR label</th><th style='width:64px'>Side</th>" : ""}
           ${shared ? "<th style='width:110px'>Listed under</th>" : ""}<th style="width:26px"></th></tr></thead>
           <tbody>${urows || '<tr><td colspan="4" class="none">none yet</td></tr>'}</tbody></table>
         <button class="mini" data-k="addunit" data-ti="${g.ti}" data-head="${g.head}">+ add a DCS unit</button>
@@ -410,8 +450,9 @@ $("#app").addEventListener("click", ev => {
     if (ri === head && t.rows[ri + 1] && t.rows[ri + 1].code === null) t.rows[ri + 1].code = t.rows[ri].code;
     t.rows.splice(ri, 1);
   } else if (d.k === "addunit") {
-    S.entries.push({ line: -1, raw: "", key: "New unit name", code: g.code, coal: "2",
-                     desc: (t.rows[g.head].cells[0] || "").split(/[/;\n]/)[0].trim() || "NEW",
+    const fmt = S.rich ? "rwr_codes" : (S.entries.find(x => x.fmt === "symbols_strings") ? "symbols_strings" : "symbols");
+    S.entries.push({ line: -1, raw: "", fmt, key: "New unit name", code: g.code, coal: "2",
+                     desc: !S.rich ? "" : (t.rows[g.head].cells[0] || "").split(/[/;\n]/)[0].trim() || "NEW",
                      comment: "", dirty: true, dead: false });
     if ((J.byCode.get(g.code) || []).length > 1) S.links[S.entries[S.entries.length - 1].key] = g.id;
   } else if (d.k === "delunit") {
@@ -492,6 +533,8 @@ async function useDir(dir) {
                       return false; }
   S.dir = dir;
   remember(dir);
+  const rank = n => /ALR/i.test(n) ? 0 : 1;                // _Common\Cockpit holds a lot of lua
+  luas.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   const pick = luas.includes(MAIN) ? MAIN : luas.length === 1 ? luas[0] : null;
   if (pick) { await openFromDir(pick); return true; }
   $("#app").innerHTML = '<div class="ptools">Which file?</div>' + luas.map(n =>
