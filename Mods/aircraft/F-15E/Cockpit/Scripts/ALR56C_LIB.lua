@@ -7,6 +7,12 @@
 -- 7N = AWACS (Russian/PLA)
 
 rwr_codes = {}
+
+-- Restored stock F-15E entries.
+rwr_codes["S-3B"				] = { code = "S3", coal = 1, desc = "S-3" }
+rwr_codes["S-3B Tanker"			] = { code = "S3", coal = 1, desc = "S-3" }
+rwr_codes["Tu-160"				] = { code = "65", coal = 2, desc = "TU-160" }
+
 rwr_codes["F-4E"				] = { code = "F4", coal = 1, desc = "F-4E" }
 rwr_codes["F-4E-45MC"			] = { code = "F4", coal = 1, desc = "F-4E" } -- Heatblur F-4
 rwr_codes["F-5E"				] = { code = "F5", coal = 1, desc = "F-5E" }
@@ -251,8 +257,8 @@ rwr_codes["USNS_Comfort T-AH-20"		] = { code = "59", coal = 1, desc="AN/SPS-59" 
 rwr_codes["USNS_Mercy T-AH-19"		    ] = { code = "59", coal = 1, desc="AN/SPS-59" }
 
 rwr_codes["Admiral Ushakov"		    	] = { code = "TP", coal = 1, desc="Top Plate" } -- SA-N-7 Gadfly -- always shows as DT???
-rwr_codes["Aquitaine D650"		    	] = { code = "HL", coal = 1, desc="Héraklès" }
-rwr_codes["D651_Normandie"		    	] = { code = "HL", coal = 1, desc="Héraklès" }
+rwr_codes["Aquitaine D650"		    	] = { code = "HL", coal = 1, desc="HÃ©raklÃ¨s" }
+rwr_codes["D651_Normandie"		    	] = { code = "HL", coal = 1, desc="HÃ©raklÃ¨s" }
 rwr_codes["Udaloy II DDG Admiral Chabanenko"		    ] = { code = "TP", coal = 1, desc="Top Plate" } -- SA-N-11a Grisom
 rwr_codes["OSA_One"		    			] = { code = "DT", coal = 1, desc="Drum Tilt" }
 rwr_codes["OSA_Two"		    			] = { code = "DT", coal = 1, desc="Drum Tilt" }
