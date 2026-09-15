@@ -214,7 +214,7 @@ rwr_codes["Type055"	       		] = { code = "CG", coal = 2, desc="Type 346B" }
 rwr_codes["CH_Type056A"	       	] = { code = "FS", coal = 2, desc="Type 349A" }
 rwr_codes["PGL_625"	  	     	] = { code = "25", coal = 2, desc="PGL-625" }
 rwr_codes["HQ17A"		       	] = { code = "17", coal = 2, desc="HQ-17" }
-rwr_codes["CH_PGZ09"	       	] = { code = "09", coal = 2, desc="PGZ-09" }
+rwr_codes["CH_PGZ09"	       	] = { code = "Z9", coal = 2, desc="PGZ-09" }
 rwr_codes["CH_PGZ95"	       	] = { code = "95", coal = 2, desc="PGZ-95" }
 rwr_codes["CH_LD3000"	       	] = { code = "30", coal = 2, desc="LD-3000" }
 rwr_codes["CH_LD3000_stationary"] = { code = "30", coal = 2, desc="LD-3000" }
