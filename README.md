@@ -12,7 +12,7 @@ A single page that edits the DCS RWR threat libraries and prints the reference s
 dist/
   ALR56C_LIB.lua           # F-15E ALR-56C threat library
   AN_ALR_SymbolsBase.lua   # ED's shared RWR symbol table
-  RWR Editor.pdf           # the three page F-15E code reference sheet
+  RWR Editor.pdf           # F-15E code, DCS unit name, and radar name reference
 ```
 
 Those copies are read only in the browser, and they are a starting point rather than a requirement. Nobody has to fly USLANTCOM's codes. Press **Open .lua**, point the editor at your own DCS install, and build whatever mapping suits your group. Saving writes to your files, never to these.
